@@ -1,41 +1,39 @@
 import { auth } from "./firebase.js";
 import { signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-window.addEventListener("hashchange", render);
-render();
+window.addEventListener("hashchange", renderHome);
+renderHome();
 
-function render() {
+function renderHome() {
+  if (location.hash && location.hash !== "#home") return;
+
   const app = document.getElementById("app");
 
-  if (location.hash === "#home") {
+  app.innerHTML = `
+    <h2>Assessment Analysis System</h2>
 
-    app.innerHTML = `
-      <h2>Welcome</h2>
+    <div style="margin-top:30px">
+      <button onclick="location.hash='#take-test'">
+        Take Test
+      </button>
+    </div>
 
-      <div class="subjects">
-        <button data-subject="C">C</button>
-        <button data-subject="HTML">HTML</button>
-        <button data-subject="CSS">CSS</button>
-        <button data-subject="JavaScript">JavaScript</button>
-        <button data-subject="MySQL">MySQL</button>
-      </div>
-
+    <div style="margin-top:20px">
+      <button onclick="location.hash='#scores'">
+        View Previous Scores
+      </button>
+    </div>
+  
       <br><br>
       <button id="logoutBtn">Logout</button>
     `;
 
-    // Attach subject navigation AFTER HTML is rendered
-    document.querySelectorAll(".subjects button").forEach(btn => {
-      btn.onclick = () => {
-        const subject = btn.dataset.subject;
-        window.location.hash = `#test-${subject}`;
-      };
-    });
+   
 
     // Attach logout handler
     document.getElementById("logoutBtn").onclick = () => {
       signOut(auth);
       window.location.hash = "";
     };
-  }
 }
+

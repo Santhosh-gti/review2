@@ -13,13 +13,15 @@ import {
   httpsCallable
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js";
 
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
 
 /* ---------------- GLOBAL STATE ---------------- */
-window.addEventListener("hashchange", renderTest);
-renderTest();
-
 let currentQuestions = [];
 let currentSubject = "";
+
+window.addEventListener("hashchange", renderTest);
+renderTest();
 
 const functions = getFunctions();
 const generateAIFeedback = httpsCallable(functions, "generateAIFeedback");
@@ -35,7 +37,24 @@ async function renderTest() {
   app.innerHTML = `<h2>${currentSubject} Test</h2><p>Loading questions...</p>`;
 
   const qRef = collection(db, "questions");
-  const q = query(qRef, where("subject", "==", currentSubject));
+
+  const selectedConcepts =
+    JSON.parse(sessionStorage.getItem("selectedConcepts")) || [];
+
+  let q;
+
+  if (selectedConcepts.length > 0) {
+    q = query(
+      qRef,
+      where("subject", "==", currentSubject),
+      where("concepts", "array-contains-any", selectedConcepts)
+    );
+  } else {
+    q = query(
+      qRef,
+      where("subject", "==", currentSubject)
+    );
+  }
   const snapshot = await getDocs(q);
 
   currentQuestions = [];
@@ -157,11 +176,13 @@ async function handleEvaluation(userAnswers) {
       normalizeAnswer(userAnswerText, qn) ===
       normalizeAnswer(correctAnswerText, qn);
 
+    const mainConcept = qn.concepts?.[0];
+
     if (isCorrect) {
       score++;
-      qn.concepts?.forEach(c => strengths.add(c));
+      if (mainConcept) strengths.add(mainConcept);
     } else {
-      qn.concepts?.forEach(c => weaknesses.add(c));
+      if (mainConcept) weaknesses.add(mainConcept);
     }
 
     let aiFeedback = "";
@@ -200,7 +221,11 @@ async function handleEvaluation(userAnswers) {
     });
   }
 
-  await addDoc(collection(db, "tests"), {
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  const docRef = await addDoc(collection(db, "tests"), {
+    userId: user.uid,
     subject: currentSubject,
     score,
     strengths: [...strengths],
@@ -209,5 +234,6 @@ async function handleEvaluation(userAnswers) {
     submitted_at: serverTimestamp()
   });
 
+  sessionStorage.setItem("viewTestId", docRef.id);
   location.hash = "#results";
 }

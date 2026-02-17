@@ -2,6 +2,7 @@ import { db } from "./firebase.js";
 import {
   collection,
   query,
+  where,
   orderBy,
   limit,
   getDocs
@@ -17,26 +18,63 @@ async function renderResults() {
   const app = document.getElementById("app");
   app.innerHTML = "<h2>Loading Results...</h2>";
 
-  const q = query(
-    collection(db, "tests"),
-    orderBy("submitted_at", "desc"),
-    limit(1)
-  );
+  const testId = sessionStorage.getItem("viewTestId");
 
-  const snapshot = await getDocs(q);
+  let snapshot;
+
+  if (testId) {
+    snapshot = await getDocs(
+      query(collection(db, "tests"), where("__name__", "==", testId))
+    );
+  } else {
+    snapshot = await getDocs(
+      query(
+        collection(db, "tests"),
+        orderBy("submitted_at", "desc"),
+        limit(1)
+      )
+    );
+  }
+
   if (snapshot.empty) {
     app.innerHTML = "<p>No results found.</p>";
     return;
   }
 
   const test = snapshot.docs[0].data();
+  sessionStorage.removeItem("viewTestId");
+
+  const totalQuestions = test.answers?.length || 0;
 
   let html = `
     <h2>Results - ${test.subject}</h2>
-    <p><b>Score:</b> ${test.score}</p>
-
-    <h3>Detailed Analysis</h3>
+    <p><b>Score:</b> ${test.score}/ ${totalQuestions}</p>
   `;
+
+  /* ---------- STRENGTHS & WEAKNESSES ---------- */
+if (test.strengths?.length || test.weaknesses?.length) {
+  html += `<h3>Performance Summary</h3>`;
+
+  if (test.strengths?.length) {
+    html += `
+      <b>Strengths:</b>
+      <ul>
+        ${test.strengths.map(s => `<li>${s}</li>`).join("")}
+      </ul>
+    `;
+  }
+
+  if (test.weaknesses?.length) {
+    html += `
+      <b>Weaknesses:</b>
+      <ul>
+        ${test.weaknesses.map(w => `<li>${w}</li>`).join("")}
+      </ul>
+      <hr>
+    `;
+  }
+}
+
 
   test.answers.forEach((a, i) => {
     html += `
