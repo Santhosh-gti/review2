@@ -62,7 +62,7 @@ async function renderConcepts() {
         <label>
           <input type="checkbox" value="${concept}">
           ${concept}
-        </label>
+        </label><br>
       `;
     });
 
