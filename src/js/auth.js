@@ -106,7 +106,7 @@ onAuthStateChanged(auth, async (user) => {
     location.hash = "#home";
   } else {
     sessionStorage.clear();
-    location.hash = "#login";
+    location.hash = "#start";
   }
 });
 

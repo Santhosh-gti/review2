@@ -15,7 +15,6 @@ import {
 
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-
 /* ---------------- GLOBAL STATE ---------------- */
 let currentQuestions = [];
 let currentSubject = "";
@@ -34,7 +33,7 @@ async function renderTest() {
   currentSubject = hash.replace("#test-", "");
   const app = document.getElementById("app");
 
-  app.innerHTML = `<h2>${currentSubject} Test</h2><p>Loading questions...</p>`;
+  app.innerHTML = `<p>Loading questions...</p>`;
 
   const qRef = collection(db, "questions");
 
@@ -50,42 +49,46 @@ async function renderTest() {
       where("concepts", "array-contains-any", selectedConcepts)
     );
   } else {
-    q = query(
-      qRef,
-      where("subject", "==", currentSubject)
-    );
+    q = query(qRef, where("subject", "==", currentSubject));
   }
+
   const snapshot = await getDocs(q);
 
   currentQuestions = [];
 
-  let html = `<h2>${currentSubject} Test</h2><form id="testForm">`;
+  let html = `
+    <div class="header">CodeInsight</div>
+
+    <div class="page-container">
+      <h2>${currentSubject} Test</h2>
+      <form id="testForm">
+  `;
+
   let i = 1;
 
   snapshot.forEach(doc => {
     const qn = { id: doc.id, ...doc.data() };
     currentQuestions.push(qn);
 
-    html += `<div class="question">
-      <p><b>Q${i}</b>: ${qn.prompt_text}</p>`;
+    html += `<div class="question-card">
+      <p><b>Q${i}:</b> ${qn.prompt_text}</p>`;
 
     if (qn.code_snippet) {
-      html += `<pre>${qn.code_snippet}</pre>`;
+      html += `<pre class="code-block">${qn.code_snippet}</pre>`;
     }
 
     if (qn.prompt_image) {
-      html += `<img src="${qn.prompt_image}"
-        style="max-width:420px;border:1px solid #ccc;margin:10px 0"><br>`;
+      html += `<img src="${qn.prompt_image}" class="question-img"><br>`;
     }
 
     /* ---------- MCQ ---------- */
     if (qn.type === "mcq") {
       qn.options.forEach((opt, idx) => {
         html += `
-          <label>
+          <label class="option">
             <input type="radio" name="q${i}" value="${idx}">
-            <pre style="display:inline">${opt.value}</pre>
-          </label><br>
+            <pre class="option-text">${opt.value}</pre>
+          </label>
         `;
       });
     }
@@ -94,17 +97,119 @@ async function renderTest() {
     else if (qn.type === "OUTPUT") {
       html += `
         <input type="text"
-               name="q${i}"
-               placeholder="Enter output"
-               style="width:300px">
+          name="q${i}"
+          placeholder="Enter output"
+          class="output-box">
       `;
     }
 
-    html += `</div><br>`;
+    html += `</div>`;
     i++;
   });
 
-  html += `<button type="submit">Submit Test</button></form>`;
+  html += `
+        <button type="submit" class="submit-btn">Submit Test</button>
+      </form>
+    </div>
+
+    <div class="footer">
+      © 2026 CodeInsight • Built for students
+    </div>
+
+    <style>
+
+      .page-container {
+        max-width: 800px;
+        margin: auto;
+        padding: 30px;
+      }
+
+      .question-card {
+        background: white;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      }
+
+      .code-block {
+        background: #f4f4f4;
+        padding: 10px;
+        border-radius: 6px;
+        overflow-x: auto;
+      }
+
+      .question-img {
+        max-width: 100%;
+        border: 1px solid #ccc;
+        margin: 10px 0;
+      }
+
+      /* MCQ styling */
+      .option {
+        display: block;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        margin: 8px 0;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+
+      .option-text {
+        display: inline;
+        margin: 0;
+        white-space: pre-wrap;
+        font-family: inherit;
+      }
+
+      .option:hover {
+        background: #f5f5f5;
+      }
+
+      .option input {
+        margin-right: 10px;
+      }
+
+      .option input:checked + span {
+        color: green;
+        font-weight: bold;
+      }
+
+      /* OUTPUT BOX FIXED */
+      .output-box {
+        width: 100%;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+        transition: border 0.2s, box-shadow 0.2s;
+      }
+
+      .output-box:focus {
+        outline: none;
+        border: 1px solid #4a90e2;
+        box-shadow: 0 0 5px rgba(74,144,226,0.5);
+      }
+
+      .submit-btn {
+        width: 100%;
+        padding: 12px;
+        background: #4a90e2;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-top: 20px;
+      }
+
+      .submit-btn:hover {
+        background: #357bd8;
+      }
+
+    </style>
+  `;
+
   app.innerHTML = html;
 
   document.getElementById("testForm").onsubmit = handleSubmit;
@@ -155,19 +260,13 @@ async function handleEvaluation(userAnswers) {
     let userAnswerText = "";
     let correctAnswerText = "";
 
-    /* ---------- MCQ ---------- */
     if (qn.type === "mcq") {
       const userIndex = Number(userAnswers[key]);
       const correctIndex = Number(qn.expected_answer);
 
-      userAnswerText =
-        qn.options?.[userIndex]?.value ?? "No answer";
-      correctAnswerText =
-        qn.options?.[correctIndex]?.value ?? "No answer";
-    }
-
-    /* ---------- OUTPUT ---------- */
-    else if (qn.type === "OUTPUT") {
+      userAnswerText = qn.options?.[userIndex]?.value ?? "No answer";
+      correctAnswerText = qn.options?.[correctIndex]?.value ?? "No answer";
+    } else {
       userAnswerText = userAnswers[key] || "No answer";
       correctAnswerText = qn.expected_answer || "No answer";
     }
@@ -195,12 +294,8 @@ async function handleEvaluation(userAnswers) {
           correctAnswer: correctAnswerText
         });
 
-        aiFeedback = res.data.feedback
-          ?.replace(/\*\*/g, "")
-          ?.replace(/(\d+\.)/g, "\n$1")
-          ?.trim() || "";
+        aiFeedback = res.data.feedback || "";
       } catch (err) {
-        console.error("AI feedback failed:", err);
         aiFeedback = "AI feedback unavailable.";
       }
     }

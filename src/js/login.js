@@ -1,4 +1,6 @@
-import { loginUser, resetPassword} from "./auth.js";
+import { loginUser } from "./auth.js";
+import { auth } from "./firebase.js";
+import { sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 window.addEventListener("hashchange", renderLogin);
 renderLogin();
@@ -9,42 +11,120 @@ function renderLogin() {
   const app = document.getElementById("app");
 
   app.innerHTML = `
-    <h2>Sign in to AA System</h2>
+    <style>
+      .page {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
 
-    <div style="max-width:400px">
+      .content {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
 
-      <label>Username or Email</label><br>
-      <input type="text" id="identifier" style="width:100%"><br><br>
+      .card {
+        background: white;
+        padding: 30px;
+        width: 350px;
+        border-radius: 12px;
+        box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+      }
 
-      <label>Password</label>
-      <input type="password" id="password" style="width:100%"><br><br>
+      h2 {
+        text-align: center;
+        margin-bottom: 20px;
+      }
 
-      <div style="text-align:right">
-      <a href="#" id="forgotPasswordLink">Forgot password?</a></div>
-      <br>
+      input {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 12px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+      }
 
-      <button id="loginBtn" style="width:100%">
-        Sign in
-      </button>
+      button {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        background: #4a90e2;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+      }
 
-      <br><br>
+      .link {
+        font-size: 14px;
+        color: #4a90e2;
+        cursor: pointer;
+        text-align: right;
+        display: block;
+        margin-bottom: 15px;
+      }
 
-      <hr>
+      .bottom-text {
+        text-align: center;
+        margin-top: 15px;
+        font-size: 14px;
+      }
 
-      <p>
-        New to AA System?
-        <a href="#signup">Create an account</a>
-      </p>
+      .bottom-text a {
+        color: #4a90e2;
+        text-decoration: none;
+        font-weight: 500;
+      }
+    </style>
+
+    <div class="page">
+
+      <!-- HEADER -->
+      <div class="header">
+        CodeInsight
+      </div>
+
+      <!-- CONTENT -->
+      <div class="content">
+        <div class="card">
+          <h2>Sign in</h2>
+
+          <label>Username or Email</label>
+          <input type="text" id="identifier">
+
+          <label>Password</label>
+          <input type="password" id="password">
+
+          <span class="link" id="forgotPassword">
+            Forgot password?
+          </span>
+
+          <button id="loginBtn">Sign in</button>
+
+          <div class="bottom-text">
+            New to CodeInsight?
+            <a href="#signup">Create an account</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="footer">
+        © 2026 CodeInsight • Built for students
+      </div>
+
     </div>
   `;
 
-  /* --- LOGIN --- */
+  // LOGIN
   document.getElementById("loginBtn").onclick = async () => {
     const identifier = document.getElementById("identifier").value.trim();
     const password = document.getElementById("password").value.trim();
 
     if (!identifier || !password) {
-      alert("Both fields are required");
+      alert("Please fill all fields");
       return;
     }
 
@@ -55,18 +135,15 @@ function renderLogin() {
     }
   };
 
-  /* --- FORGOT PASSWORD --- */
-  document.getElementById("forgotPasswordLink").onclick = async () => {
-    const identifier = document.getElementById("identifier").value.trim();
+  // FORGOT PASSWORD
+  document.getElementById("forgotPassword").onclick = async () => {
+    const email = prompt("Enter your registered email:");
 
-    if (!identifier) {
-      alert("Please enter your email to reset password");
-      return;
-    }
+    if (!email) return;
 
     try {
-      await resetPassword(identifier);
-      alert("Password reset email sent. Please check your inbox.");
+      await sendPasswordResetEmail(auth, email);
+      alert("Password reset email sent!");
     } catch (err) {
       alert(err.message);
     }

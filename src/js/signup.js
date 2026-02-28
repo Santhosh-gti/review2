@@ -1,4 +1,4 @@
-import { signUpUser} from "./auth.js";
+import { signUpUser } from "./auth.js";
 
 window.addEventListener("hashchange", renderSignup);
 renderSignup();
@@ -9,29 +9,102 @@ function renderSignup() {
   const app = document.getElementById("app");
 
   app.innerHTML = `
-    <h2>Create your AA Account</h2>
+    <style>
+      .page {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
 
-    <div style="max-width:400px">
+      .content {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
 
-      <label>Email</label><br>
-      <input type="email" id="email" style="width:100%"><br><br>
+      .card {
+        background: white;
+        padding: 30px;
+        width: 350px;
+        border-radius: 12px;
+        box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+      }
 
-      <label>Password</label><br>
-      <input type="password" id="password" style="width:100%"><br><br>
+      h2 {
+        text-align: center;
+        margin-bottom: 20px;
+      }
 
-      <label>Username</label><br>
-      <input type="text" id="username" style="width:100%"><br><br>
+      input {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 12px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+      }
 
-      <button id="signupBtn" style="width:100%">
-        Create Account
-      </button>
+      button {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        background: #4a90e2;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+      }
 
-      <br><br>
+      .bottom-text {
+        text-align: center;
+        margin-top: 15px;
+        font-size: 14px;
+      }
 
-      <p>
-        Already have an account?
-        <a href="#login">Sign in</a>
-      </p>
+      .bottom-text a {
+        color: #4a90e2;
+        text-decoration: none;
+        font-weight: 500;
+      }
+    </style>
+
+    <div class="page">
+
+      <!-- HEADER -->
+      <div class="header">
+        CodeInsight
+      </div>
+
+      <!-- CONTENT -->
+      <div class="content">
+        <div class="card">
+          <h2>Create Account</h2>
+
+          <label>Email</label>
+          <input type="email" id="email">
+
+          <label>Password</label>
+          <input type="password" id="password">
+
+          <label>Username</label>
+          <input type="text" id="username">
+
+          <button id="signupBtn">
+            Create Account
+          </button>
+
+          <div class="bottom-text">
+            Already have an account?
+            <a href="#login">Sign in</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="footer">
+        © 2026 CodeInsight • Built for students
+      </div>
+
     </div>
   `;
 
@@ -56,6 +129,4 @@ function renderSignup() {
       alert(err.message);
     }
   };
-
- 
 }

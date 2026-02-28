@@ -34,11 +34,20 @@ async function renderScores() {
   const snapshot = await getDocs(q);
 
   if (snapshot.empty) {
-    app.innerHTML = "<h2>Previous Scores</h2><p>No tests taken yet.</p>";
+    app.innerHTML = `
+      <div class="header">CodeInsight</div>
+
+      <div class="page-container">
+        <h2>Previous Scores</h2>
+        <p>No tests taken yet.</p>
+        <button class="back-btn" onclick="location.hash='#home'">Back</button>
+      </div>
+
+      <div class="footer">© 2026 CodeInsight • Built for students</div>
+    `;
     return;
   }
 
-  // Convert docs to array for filtering
   const tests = snapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data()
@@ -52,19 +61,25 @@ function renderList(app, tests, selectedSubject) {
   const subjects = ["all", "C", "HTML", "CSS", "JavaScript", "MySQL"];
 
   let html = `
-    <h2>Previous Scores</h2>
+    <!-- HEADER -->
+    <div class="header">CodeInsight</div>
 
-    <label><b>Filter by Subject:</b></label>
-    <select id="subjectFilter">
-      ${subjects.map(s => `
-        <option value="${s}" ${s === selectedSubject ? "selected" : ""}>
-          ${s.toUpperCase()}
-        </option>
-      `).join("")}
-    </select>
+    <div class="page-container">
 
-    <br><br>
-    <ul>
+      <h2>Previous Scores</h2>
+
+      <div class="filter-box">
+        <label><b>Filter by Subject:</b></label>
+        <select id="subjectFilter">
+          ${subjects.map(s => `
+            <option value="${s}" ${s === selectedSubject ? "selected" : ""}>
+              ${s.toUpperCase()}
+            </option>
+          `).join("")}
+        </select>
+      </div>
+
+      <div class="score-list">
   `;
 
   const filteredTests =
@@ -82,27 +97,118 @@ function renderList(app, tests, selectedSubject) {
         : "Unknown date";
 
       html += `
-        <li style="margin-bottom:12px">
-          <b>${test.subject}</b> |
-          Score: ${test.score} |
-          ${date}
-          <button onclick="viewResult('${test.id}')">
+        <div class="score-card">
+          <div class="score-info">
+            <h3>${test.subject}</h3>
+            <p><b>Score:</b> ${test.score}</p>
+            <p class="date">${date}</p>
+          </div>
+
+          <button class="view-btn" onclick="viewResult('${test.id}')">
             View Result
           </button>
-        </li>
+        </div>
       `;
     });
   }
 
   html += `
-    </ul>
-    <br>
-    <button onclick="location.hash='#home'">Back</button>
+      </div>
+
+      <button class="back-btn" onclick="location.hash='#home'">Back</button>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+      © 2026 CodeInsight • Built for students
+    </div>
+
+    <!-- INTERNAL CSS -->
+    <style>
+
+      .page-container {
+        padding: 30px;
+        min-height: calc(100vh - 140px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      h2 {
+        margin-bottom: 20px;
+      }
+
+      .filter-box {
+        margin-bottom: 25px;
+      }
+
+      select {
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        margin-left: 10px;
+      }
+
+      .score-list {
+        width: 100%;
+        max-width: 600px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .score-card {
+        background: white;
+        padding: 18px 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .score-info h3 {
+        margin: 0 0 5px 0;
+      }
+
+      .score-info p {
+        margin: 2px 0;
+      }
+
+      .date {
+        font-size: 13px;
+        color: #777;
+      }
+
+      .view-btn {
+        background: #4f8df5;
+        color: white;
+        border: none;
+        padding: 8px 14px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+
+      .view-btn:hover {
+        background: #3c73cc;
+      }
+
+      .back-btn {
+        margin-top: 25px;
+        padding: 10px 20px;
+        border: none;
+        background: #555;
+        color: white;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+
+    </style>
   `;
 
   app.innerHTML = html;
 
-  // Attach filter listener
   document.getElementById("subjectFilter")
     .addEventListener("change", (e) => {
       renderList(app, tests, e.target.value);
